@@ -67,16 +67,23 @@ function getBase64(img, callback) {
 在paste事件的回调函数中, 调用*DataTransfer.getData(type)*, 获取所有的文本数据, 阻止浏览器默认的粘贴行为, 手动添加文本节点.
 
 ```
-function transformClipboardText(e) {
-  let paste = (e.clipboardData || window.clipboardData).getData('text') || '';
-  // paste = paste.toUpperCase();
+let transformClipboardText = function (e) {
+  let pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+  let pasteNode = document.createTextNode(pasteText);
 
   const selection = window.getSelection();
   if (!selection.rangeCount) return false;
   // delete selected content
   selection.deleteFromDocument();
-  selection.getRangeAt(0).insertNode(document.createTextNode(paste));
-  selection.collapseEnd();
+  selection.getRangeAt(0).insertNode(pasteNode);
+
+  // browser handle selection differently from here, to make them compatible, move cursor to the end of the pasted node
+  let range = document.createRange();
+  range.setStart(pasteNode, pasteNode.nodeValue.length);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+
   // prevent append tag
   e.preventDefault();
 };
